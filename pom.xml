@@ -36,10 +36,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!--<dependency>-->
-        <!--<groupId>org.springframework.boot</groupId>-->
-        <!--<artifactId>spring-boot-starter-data-rest</artifactId>-->
-        <!--</dependency>-->
         <!--  ==============================================  -->
         <!--  ==============================================  -->
         <!--  DATABASE DEPENDENCIES  -->
@@ -67,11 +63,6 @@
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-taglibs</artifactId>
-            <version>4.0.3.RELEASE</version>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-ldap</artifactId>
             <version>4.0.3.RELEASE</version>
         </dependency>
         <!--  ==============================================  -->
@@ -107,9 +98,7 @@
         <repository>
             <id>org.jboss.repository.releases</id>
             <name>JBoss Maven Release Repository</name>
-            <url>
-                https://repository.jboss.org/nexus/content/repositories/releases
-            </url>
+            <url>https://repository.jboss.org/nexus/content/repositories/releases</url>
         </repository>
     </repositories>
     <pluginRepositories>
