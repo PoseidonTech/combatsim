@@ -9,7 +9,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
@@ -28,23 +27,23 @@ public class Combatant {
 
     @NotNull
     @Column(nullable = false)
-    private Integer strength;//melee damage
+    private Integer strength;   //melee damage
 
     @NotNull
     @Column(nullable = false)
-    private Integer perception;//accuracy
+    private Integer perception; //accuracy
 
     @NotNull
     @Column(nullable = false)
-    private Integer endurance;//health
+    private Integer endurance;  //health
 
     @NotNull
     @Column(nullable = false)
-    private Integer agility;//speed
+    private Integer agility;    //speed
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "combatant", orphanRemoval = true)
-    @JoinColumn(name = "main_weapon_id", referencedColumnName = "combatant_weapon_id", columnDefinition = "BIGINT(20)")
-    private CombatantWeapon mainWeapon;
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "main_weapon_id", referencedColumnName = "weapon_id", columnDefinition = "BIGINT(20)")
+    private Weapon mainWeapon;
 
     @Column
     private Integer currentHealth;
@@ -56,7 +55,7 @@ public class Combatant {
     public Combatant() {//default constructor
     }
 
-    private Combatant(String name, Integer strength, Integer perception, Integer endurance, Integer agility, CombatantWeapon mainWeapon) {
+    private Combatant(String name, Integer strength, Integer perception, Integer endurance, Integer agility, Weapon mainWeapon) {
         this.name = name;
         this.strength = strength;
         this.perception = perception;
@@ -114,12 +113,11 @@ public class Combatant {
         this.agility = agility;
     }
 
-    public CombatantWeapon getMainWeapon() {
+    public Weapon getMainWeapon() {
         return this.mainWeapon;
     }
 
-    public void setMainWeapon(CombatantWeapon mainWeapon) {
-        mainWeapon.setCombatant(this);
+    public void setMainWeapon(Weapon mainWeapon) {
         this.mainWeapon = mainWeapon;
     }
 
@@ -144,25 +142,6 @@ public class Combatant {
         return 10 + endurance*2;
     }
 
-    public Weapon getMainWeaponDirect() {
-        Weapon weapon = null;
-        if(this.mainWeapon != null) {
-            weapon = mainWeapon.getWeapon();
-        }
-        return weapon;
-    }
-
-    public void setMainWeaponDirect(Weapon weapon) {
-        if(this.mainWeapon != null) {
-            this.mainWeapon.setWeapon(weapon);
-        } else {
-            CombatantWeapon combatantWeapon = new CombatantWeapon();
-            combatantWeapon.setCombatant(this);
-            combatantWeapon.setWeapon(weapon);
-            this.mainWeapon = combatantWeapon;
-        }
-    }
-
     public boolean takeDamage(Integer damage) {
         this.currentHealth -= damage;
         return this.currentHealth < 1;
@@ -175,7 +154,7 @@ public class Combatant {
         private Integer perception;
         private Integer endurance;
         private Integer agility;
-        private CombatantWeapon mainWeapon;
+        private Weapon mainWeapon;
 
         public Builder setName(String name) {
             this.name = name;
@@ -202,7 +181,7 @@ public class Combatant {
             return this;
         }
 
-        public Builder setMainWeapon(CombatantWeapon mainWeapon) {
+        public Builder setMainWeapon(Weapon mainWeapon) {
             this.mainWeapon = mainWeapon;
             return this;
         }
