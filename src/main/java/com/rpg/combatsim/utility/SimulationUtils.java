@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 public class SimulationUtils {
 
-    private SimulationUtils() {//default constructor
+    private SimulationUtils() {//private constructor to hide default public
     }
 
     //region general utility methods
@@ -110,15 +110,15 @@ public class SimulationUtils {
         Map<Combatant, Map<Combatant, Integer>> initialThreatMap = new HashMap<>();
         for (Combatant combatant : combatantList) {
             String team = teamsMap.entrySet().stream().filter(x -> x.getValue().contains(combatant)).collect(Collectors.toList()).get(0).getKey();
+            Map<Combatant, Integer> myThreatMap = new HashMap<>();
             for (Map.Entry<String, List<Combatant>> entry : teamsMap.entrySet()) {
                 if (!entry.getKey().equals(team)) {
-                    Map<Combatant, Integer> myThreatMap = new HashMap<>();
                     for (Combatant otherCombatant : entry.getValue()) {
                         myThreatMap.put(otherCombatant, 0);
                     }
-                    initialThreatMap.put(combatant, myThreatMap);
                 }
             }
+            initialThreatMap.put(combatant, myThreatMap);
         }
         return initialThreatMap;
     }
@@ -169,6 +169,33 @@ public class SimulationUtils {
         }
         Collections.shuffle(biggestThreatList);
         return !biggestThreatList.isEmpty() ? biggestThreatList.get(0) : null;
+    }
+    //endregion
+
+    //region pre-round methods
+    public static void grabRandomWeapons(List<Combatant> combatantList, List<Weapon> weaponList) {
+        Collections.shuffle(weaponList);
+
+        //assign random weapons
+        for (int i = 0; i < combatantList.size(); i++) {
+            combatantList.get(i).setMainWeapon(weaponList.get(i));
+        }
+    }
+
+    public static void unassignWeapons(List<Combatant> combatantList) {
+        for (Combatant combatant : combatantList) {
+            combatant.setMainWeapon(null);
+        }
+    }
+    //endregion
+
+    //region post-round methods
+    public static void resetHealthAndReloadWeapons(List<Combatant> combatantList) {
+        for(Combatant combatant : combatantList) {
+            combatant.setCurrentHealth(combatant.getMaxHealth());
+            Weapon weapon = combatant.getMainWeapon();
+            weapon.setCurrentAmmo(weapon.getMaxAmmo());
+        }
     }
     //endregion
 }

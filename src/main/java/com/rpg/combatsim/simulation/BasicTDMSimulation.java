@@ -19,7 +19,9 @@ public class BasicTDMSimulation implements ISimulation {
     private static final Logger LOGGER = Logger.getLogger(BasicTDMSimulation.class);
 
     private Map<String, List<Combatant>> teamsMap;
+    private Map<String, List<Combatant>> livingTeamsMap;
 
+    //region ISimulation override methods
     @Override
     public void handleDeath(List<Combatant> livingCombatantList, Combatant attacker, Map<Combatant, Map<Combatant, Integer>> threatMap) {
         Combatant deadCombatant = attacker.getCurrentTarget();
@@ -35,7 +37,7 @@ public class BasicTDMSimulation implements ISimulation {
 
         //remove dead combatant from teamsMap and mark team for teamsMap if they are last remaining
         String teamToRemove = null;
-        for (Map.Entry<String, List<Combatant>> entry : this.teamsMap.entrySet()) {
+        for (Map.Entry<String, List<Combatant>> entry : this.livingTeamsMap.entrySet()) {
             if (entry.getValue().contains(deadCombatant)) {
                 if (entry.getValue().size() > 1) {
                     entry.getValue().remove(deadCombatant);
@@ -45,7 +47,7 @@ public class BasicTDMSimulation implements ISimulation {
             }
         }
         if(teamToRemove != null) {//remove team if marked for removal
-            teamsMap.remove(teamToRemove);
+            livingTeamsMap.remove(teamToRemove);
         }
 
         //redirect any combatants targeting the dead combatant
@@ -94,44 +96,30 @@ public class BasicTDMSimulation implements ISimulation {
     }
     //endregion
 
-    public void setRandomTeamsMap(List<Combatant> combatantList, int numTeams) {
-        this.teamsMap = new HashMap<>();
-        Random random = new Random();
-        List<Combatant> randomList = new ArrayList<>(combatantList);
-        Collections.shuffle(randomList);
-
-        if (numTeams <= randomList.size()) {
-
-            int teamSize = randomList.size() / numTeams;
-            int remainder = randomList.size() - teamSize * numTeams;
-            for (int i = 0; i < numTeams; i++) {
-                String teamName = "Team " + (i + 1);
-                List<Combatant> thisTeam = teamsMap.computeIfAbsent(teamName, k -> new ArrayList<>());
-                for (int j = 0; j < teamSize; j++) {
-                    thisTeam.add(randomList.get(i + teamSize * j));
-                }
-            }
-
-            //deal with remainders
-            for (int i = 0; i < remainder; i++) {
-                int teamNum = random.nextInt(numTeams) + 1;
-                String teamName = "Team " + teamNum;
-                teamsMap.get(teamName).add(combatantList.get(teamSize * numTeams + i));
-            }
-        } else {
-            throw new InvalidParameterException("numTeams must be less than or equal to number of combatants (combatantList.size())");
-        }
-
-        for (Map.Entry<String, List<Combatant>> entry : teamsMap.entrySet()) {
-            LOGGER.info(entry.getKey() + ": " + Arrays.toString(entry.getValue().stream().map(Combatant::getName).toArray()));
-        }
+    //instance methods
+    public void setTeamsMap(Map<String, List<Combatant>> teamsMap) {
+        this.teamsMap = teamsMap;
     }
 
-    public void genTDMSim(List<Combatant> combatantList, int numTeams) {
-        setRandomTeamsMap(combatantList, numTeams);
-        Map<Combatant, Map<Combatant, Integer>> threatMap = SimulationUtils.genInitThreatMapTeams(combatantList, this.teamsMap);
+    private Map<String, List<Combatant>> shallowCopyMyTeamsMap() {
+        Map<String, List<Combatant>> shallowTeamsMapCopy = new HashMap<>();
+        for(Map.Entry<String, List<Combatant>> entry : this.teamsMap.entrySet()) {
+            shallowTeamsMapCopy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+        return shallowTeamsMapCopy;
+    }
+    //endregion
+
+    public void genTDMSim(List<Combatant> combatantList) {
+        this.livingTeamsMap = shallowCopyMyTeamsMap();
+        Map<Combatant, Map<Combatant, Integer>> threatMap = SimulationUtils.genInitThreatMapTeams(combatantList, this.livingTeamsMap);
         SimulationUtils.setInitTargetsRandomGeneral(combatantList, threatMap);
         List<Combatant> livingCombatantList = new ArrayList<>(combatantList);
+
+        //log printoff of teams
+        for (Map.Entry<String, List<Combatant>> entry : this.livingTeamsMap.entrySet()) {
+            LOGGER.info(entry.getKey() + ": " + Arrays.toString(entry.getValue().stream().map(Combatant::getName).toArray()));
+        }
 
         LOGGER.info("Weapon Mapping:");
         LOGGER.info(Arrays.toString(combatantList.stream().map(x -> x.getName() + ":" + x.getMainWeapon().getName()).toArray()));
@@ -142,7 +130,7 @@ public class BasicTDMSimulation implements ISimulation {
         LOGGER.info("Targets: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
 
         //end condition should be only one team not empty, also remove dead combatants from team map
-        while (this.teamsMap.size() > 1) {
+        while (this.livingTeamsMap.size() > 1) {
             LOGGER.info("Round " + roundNum);
 
             List<Combatant> thisRoundTurnOrderList = SimulationUtils.getRoundOrderList(livingCombatantList);
@@ -158,18 +146,51 @@ public class BasicTDMSimulation implements ISimulation {
 
             //update round
             roundNum++;
-            if (teamsMap.size() > 1) {
+            if (livingTeamsMap.size() > 1) {
                 LOGGER.info("Health: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentHealth()).toArray()));
                 LOGGER.info("Targets: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
             }
         }//end combat while loop
 
         //declare winner
-        LOGGER.info(teamsMap.entrySet().iterator().next().getKey() + " Wins!");
+        LOGGER.info(livingTeamsMap.entrySet().iterator().next().getKey() + " Wins!");
     }
 
     @Override
     public void runSim(List<Combatant> combatantList) {
-        genTDMSim(combatantList, 2);
+        genTDMSim(combatantList);
     }
+
+    //region static methods
+    public static Map<String, List<Combatant>> generateRandomTeamsMap(List<Combatant> combatantList, int numTeams) {
+        Map<String, List<Combatant>> randomTeamsMap = new HashMap<>();
+        Random random = new Random();
+        List<Combatant> randomList = new ArrayList<>(combatantList);
+        Collections.shuffle(randomList);
+
+        if (numTeams <= randomList.size()) {
+
+            int teamSize = randomList.size() / numTeams;
+            int remainder = randomList.size() - teamSize * numTeams;
+            for (int i = 0; i < numTeams; i++) {
+                String teamName = "Team " + (i + 1);
+                List<Combatant> thisTeam = randomTeamsMap.computeIfAbsent(teamName, k -> new ArrayList<>());
+                for (int j = 0; j < teamSize; j++) {
+                    thisTeam.add(randomList.get(i + numTeams * j));
+                }
+            }
+
+            //deal with remainders
+            for (int i = 0; i < remainder; i++) {
+                int teamNum = random.nextInt(numTeams) + 1;
+                String teamName = "Team " + teamNum;
+                randomTeamsMap.get(teamName).add(randomList.get(teamSize * numTeams + i));
+            }
+        } else {
+            throw new InvalidParameterException("numTeams must be less than or equal to number of combatants (combatantList.size())");
+        }
+
+        return randomTeamsMap;
+    }
+    //endregion
 }
