@@ -3,7 +3,8 @@ package com.rpg.combatsim.simulation;
 import com.rpg.combatsim.domain.Combatant;
 import com.rpg.combatsim.domain.Weapon;
 import com.rpg.combatsim.utility.SimulationUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ import java.util.Random;
 
 public class BasicTDMSimulation implements ISimulation {
 
-    private static final Logger LOGGER = Logger.getLogger(BasicTDMSimulation.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicTDMSimulation.class);
 
     private Map<String, List<Combatant>> teamsMap;
     private Map<String, List<Combatant>> livingTeamsMap;
@@ -25,7 +26,7 @@ public class BasicTDMSimulation implements ISimulation {
     @Override
     public void handleDeath(List<Combatant> livingCombatantList, Combatant attacker, Map<Combatant, Map<Combatant, Integer>> threatMap) {
         Combatant deadCombatant = attacker.getCurrentTarget();
-        LOGGER.info(deadCombatant.getName() + " Died!");
+        LOGGER.info("{} Died!", deadCombatant.getName());
         //remove dead combatant from livingCombatantList
         livingCombatantList.remove(deadCombatant);
 
@@ -72,9 +73,9 @@ public class BasicTDMSimulation implements ISimulation {
 
                 //take damage
                 boolean targetDied = myTarget.takeDamage(damage);
-                String verb = myMainWeapon.getWeaponType().equals("Ranged") ? " shot " : " hit ";
-                LOGGER.info(attacker.getName() + verb + myTarget.getName() + " with a "
-                        + myMainWeapon.getName() + " for " + damage + " damage");
+                String verb = myMainWeapon.getWeaponType().equals("Ranged") ? "shot" : "hit";
+                LOGGER.info("{} {} {} with a {} for {} damage", attacker.getName(), verb, myTarget.getName(),
+                        myMainWeapon.getName(), damage);
 
                 //update threat
                 Integer oldThreat = threatMap.get(myTarget).get(attacker);
@@ -87,11 +88,11 @@ public class BasicTDMSimulation implements ISimulation {
                     myTarget.setCurrentTarget(SimulationUtils.getMaxThreat(threatMap.get(myTarget)));
                 }//end target died/lived block
             } else {
-                LOGGER.info(attacker.getName() + " missed");
+                LOGGER.info("{} missed", attacker.getName());
             }//end hit or miss block
         } else {
             myMainWeapon.setCurrentAmmo(myMainWeapon.getMaxAmmo());
-            LOGGER.info(attacker.getName() + " reloaded");
+            LOGGER.info("{} reloaded", attacker.getName());
         }//end gun loaded check
     }
     //endregion
@@ -118,23 +119,23 @@ public class BasicTDMSimulation implements ISimulation {
 
         //log printoff of teams
         for (Map.Entry<String, List<Combatant>> entry : this.livingTeamsMap.entrySet()) {
-            LOGGER.info(entry.getKey() + ": " + Arrays.toString(entry.getValue().stream().map(Combatant::getName).toArray()));
+            LOGGER.info("{}", entry.getKey() + ": " + Arrays.toString(entry.getValue().stream().map(Combatant::getName).toArray()));
         }
 
         LOGGER.info("Weapon Mapping:");
-        LOGGER.info(Arrays.toString(combatantList.stream().map(x -> x.getName() + ":" + x.getMainWeapon().getName()).toArray()));
+        LOGGER.info("{}", Arrays.toString(combatantList.stream().map(x -> x.getName() + ":" + x.getMainWeapon().getName()).toArray()));
 
         int roundNum = 1;
 
-        LOGGER.info("Health: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentHealth()).toArray()));
-        LOGGER.info("Targets: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
+        LOGGER.info("Health: {}", Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentHealth()).toArray()));
+        LOGGER.info("Targets: {}", Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
 
         //end condition should be only one team not empty, also remove dead combatants from team map
         while (this.livingTeamsMap.size() > 1) {
-            LOGGER.info("Round " + roundNum);
+            LOGGER.info("Round {}", roundNum);
 
             List<Combatant> thisRoundTurnOrderList = SimulationUtils.getRoundOrderList(livingCombatantList);
-            LOGGER.info("Turn Order: " + Arrays.toString(thisRoundTurnOrderList.stream().map(Combatant::getName).toArray()));
+            LOGGER.info("Turn Order: {}", Arrays.toString(thisRoundTurnOrderList.stream().map(Combatant::getName).toArray()));
 
             for (Combatant combatant : thisRoundTurnOrderList) {
                 if (combatant.getCurrentHealth() > 0 && combatant.getCurrentTarget() != null) {//death and available target check
@@ -147,13 +148,13 @@ public class BasicTDMSimulation implements ISimulation {
             //update round
             roundNum++;
             if (livingTeamsMap.size() > 1) {
-                LOGGER.info("Health: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentHealth()).toArray()));
-                LOGGER.info("Targets: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
+                LOGGER.info("Health: {}", Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentHealth()).toArray()));
+                LOGGER.info("Targets: {}", Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
             }
         }//end combat while loop
 
         //declare winner
-        LOGGER.info(livingTeamsMap.entrySet().iterator().next().getKey() + " Wins!");
+        LOGGER.info("{} Wins!", livingTeamsMap.entrySet().iterator().next().getKey());
     }
 
     @Override

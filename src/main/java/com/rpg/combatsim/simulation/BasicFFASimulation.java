@@ -3,7 +3,8 @@ package com.rpg.combatsim.simulation;
 import com.rpg.combatsim.domain.Combatant;
 import com.rpg.combatsim.domain.Weapon;
 import com.rpg.combatsim.utility.SimulationUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,14 +13,14 @@ import java.util.Map;
 
 public class BasicFFASimulation implements ISimulation {
 
-    private final Logger LOGGER = Logger.getLogger(BasicFFASimulation.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicFFASimulation.class);
 
-    public BasicFFASimulation() {
+    public BasicFFASimulation() { // default constructor
     }
 
     public void handleDeath(List<Combatant> livingCombatantList, Combatant attacker, Map<Combatant, Map<Combatant, Integer>> threatMap) {
         Combatant deadCombatant = attacker.getCurrentTarget();
-        LOGGER.info(deadCombatant.getName() + " Died!");
+        LOGGER.info("{} Died!", deadCombatant.getName());
         //remove dead combatant from livingCombatantList
         livingCombatantList.remove(deadCombatant);
 
@@ -37,7 +38,6 @@ public class BasicFFASimulation implements ISimulation {
         }
     }
 
-    @Override
     public void takeTurn(List<Combatant> livingCombatantList, Combatant attacker, Map<Combatant, Map<Combatant, Integer>> threatMap) {
         Weapon myMainWeapon = attacker.getMainWeapon();
         Combatant myTarget = attacker.getCurrentTarget();
@@ -51,9 +51,9 @@ public class BasicFFASimulation implements ISimulation {
 
                 //take damage
                 boolean targetDied = myTarget.takeDamage(damage);
-                String verb = myMainWeapon.getWeaponType().equals("Ranged") ? " shot " : " hit ";
-                LOGGER.info(attacker.getName() + verb + myTarget.getName() + " with a "
-                        + myMainWeapon.getName() + " for " + damage + " damage");
+                String verb = myMainWeapon.getWeaponType().equals("Ranged") ? "shot" : "hit";
+                LOGGER.info("{} {} {} with a {} for {} damage",
+                        attacker.getName(), verb, myTarget.getName(), myMainWeapon.getName(), damage);
 
                 //update threat
                 Integer oldThreat = threatMap.get(myTarget).get(attacker);
@@ -66,11 +66,11 @@ public class BasicFFASimulation implements ISimulation {
                     myTarget.setCurrentTarget(SimulationUtils.getMaxThreat(threatMap.get(myTarget)));
                 }//end target died/lived block
             } else {
-                LOGGER.info(attacker.getName() + " missed");
+                LOGGER.info("{} missed", attacker.getName());
             }//end hit or miss block
         } else {
             myMainWeapon.setCurrentAmmo(myMainWeapon.getMaxAmmo());
-            LOGGER.info(attacker.getName() + " reloaded");
+            LOGGER.info("{} reloaded", attacker.getName());
         }//end gun loaded check
     }
     //endregion
@@ -81,18 +81,18 @@ public class BasicFFASimulation implements ISimulation {
         List<Combatant> livingCombatantList = new ArrayList<>(combatantList);
 
         LOGGER.info("Weapon Mapping:");
-        LOGGER.info(Arrays.toString(combatantList.stream().map(x -> x.getName() + ":" + x.getMainWeapon().getName()).toArray()));
+        LOGGER.info("{}", Arrays.toString(combatantList.stream().map(x -> x.getName() + ":" + x.getMainWeapon().getName()).toArray()));
 
         int roundNum = 1;
 
-        LOGGER.info("Health: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentHealth()).toArray()));
-        LOGGER.info("Targets: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
+        LOGGER.info("Health: {}", Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentHealth()).toArray()));
+        LOGGER.info("Targets: {}", Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
 
         while (livingCombatantList.size() > 1) {
-            LOGGER.info("Round " + roundNum);
+            LOGGER.info("Round {}", roundNum);
 
             List<Combatant> thisRoundTurnOrderList = SimulationUtils.getRoundOrderList(livingCombatantList);
-            LOGGER.info("Turn Order: " + Arrays.toString(thisRoundTurnOrderList.stream().map(Combatant::getName).toArray()));
+            LOGGER.info("Turn Order: {}", Arrays.toString(thisRoundTurnOrderList.stream().map(Combatant::getName).toArray()));
 
             for (Combatant combatant : thisRoundTurnOrderList) {
                 if(combatant.getCurrentHealth() > 0) {//death check
@@ -105,16 +105,15 @@ public class BasicFFASimulation implements ISimulation {
             //update round
             roundNum++;
             if(livingCombatantList.size() > 1) {
-                LOGGER.info("Health: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentHealth()).toArray()));
-                LOGGER.info("Targets: " + Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
+                LOGGER.info("Health: {}", Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentHealth()).toArray()));
+                LOGGER.info("Targets: {}", Arrays.toString(livingCombatantList.stream().map(x -> x.getName() + ":" + x.getCurrentTarget().getName()).toArray()));
             }
         }//end combat while loop
 
         //declare winner
-        LOGGER.info(livingCombatantList.get(0).getName() + " Wins!");
+        LOGGER.info("{} Wins!", livingCombatantList.get(0).getName());
     }
 
-    @Override
     public void runSim(List<Combatant> combatantList) {
         genFFASim(combatantList);
     }

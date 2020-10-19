@@ -1,59 +1,64 @@
 package com.rpg.combatsim;
 
 import com.rpg.combatsim.domain.Combatant;
+import com.rpg.combatsim.domain.GameConfig;
 import com.rpg.combatsim.domain.Weapon;
 import com.rpg.combatsim.simulation.BasicFFASimulation;
 import com.rpg.combatsim.simulation.BasicTDMSimulation;
 import com.rpg.combatsim.simulation.ISimulation;
 import com.rpg.combatsim.utility.CombatantGenerationUtils;
+import com.rpg.combatsim.utility.FileImportManager;
 import com.rpg.combatsim.utility.SimulationUtils;
 import com.rpg.combatsim.utility.WeaponGenerationUtils;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-@SpringBootApplication
-@ComponentScan(basePackages = "com.rpg.combatsim")
-@EnableJpaRepositories(basePackages = {"com.rpg.combatsim.repositories"})
 public class CombatSim {
     public static void main(String[] args) {
-        SpringApplication.run(CombatSim.class, args);
+
+        if(System.getProperty("gameConfig") == null) {
+            String path = CombatSim.class.getResource("/gameConfig.xml").getPath();
+            System.setProperty("gameConfig", path);
+        }
+
+        GameConfig gameConfig = FileImportManager.gameConfigFileImport();
 
         //combatant lists
-        List<Combatant> baseLindaList = CombatantGenerationUtils.generateBaseLindaList();
-        List<Combatant> baseEnemiesList = CombatantGenerationUtils.generateBaseEnemiesList();
-        List<Combatant> combinedLindaList = new ArrayList<>(baseLindaList);
-        combinedLindaList.addAll(baseEnemiesList);
+//        List<Combatant> baseLindaList = CombatantGenerationUtils.generateBaseLindaList();
+//        List<Combatant> baseEnemiesList = CombatantGenerationUtils.generateBaseEnemiesList();
+//        List<Combatant> combinedLindaList = new ArrayList<>(baseLindaList);
+//        combinedLindaList.addAll(baseEnemiesList);
 
         //weapon lists
-        List<Weapon> baseLindaWeaponList = WeaponGenerationUtils.generateBaseLindaWeaponList();
-        List<Weapon> combinedLindaWeaponList = WeaponGenerationUtils.generateBaseLindaCombinedWeaponList();
+//        List<Weapon> baseLindaWeaponList = WeaponGenerationUtils.generateBaseLindaWeaponList();
+//        List<Weapon> combinedLindaWeaponList = WeaponGenerationUtils.generateBaseLindaCombinedWeaponList();
 
 
         //simulations
-        BasicFFASimulation basicFFASimulation = new BasicFFASimulation();
+//        BasicFFASimulation basicFFASimulation = new BasicFFASimulation();
 
         BasicTDMSimulation randomTdmSim = new BasicTDMSimulation();
 
-        BasicTDMSimulation fourVfourTdmSim = new BasicTDMSimulation();
-        Map<String, List<Combatant>> lindaVenemiesTeamMap = new HashMap<>();
-        lindaVenemiesTeamMap.put("Team Linda", baseLindaList);
-        lindaVenemiesTeamMap.put("Team Enemies", baseEnemiesList);
-        fourVfourTdmSim.setTeamsMap(lindaVenemiesTeamMap);
+//        BasicTDMSimulation fourVfourTdmSim = new BasicTDMSimulation();
+//        Map<String, List<Combatant>> lindaVenemiesTeamMap = new HashMap<>();
+//        lindaVenemiesTeamMap.put("Team Linda", baseLindaList);
+//        lindaVenemiesTeamMap.put("Team Enemies", baseEnemiesList);
+//        fourVfourTdmSim.setTeamsMap(lindaVenemiesTeamMap);
 
-        List<Combatant> chosenCombatantList = combinedLindaList;
-        List<Weapon> chosenWeaponList = combinedLindaWeaponList;
+//        List<Combatant> chosenCombatantList = combinedLindaList;
+//        List<Weapon> chosenWeaponList = combinedLindaWeaponList;
+        List<Combatant> chosenCombatantList = gameConfig.getCombatants();
+        List<Weapon> chosenWeaponList = gameConfig.getWeapons();
         SimulationUtils.grabRandomWeapons(chosenCombatantList, chosenWeaponList);
 
         //gen teams list for randomTdmSim case
         randomTdmSim.setTeamsMap(BasicTDMSimulation.generateRandomTeamsMap(chosenCombatantList, 3));
+        SimulationUtils.resetHealthAndReloadWeapons(chosenCombatantList);
 
         ISimulation chosenSim = randomTdmSim;
 

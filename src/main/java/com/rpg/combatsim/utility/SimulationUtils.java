@@ -78,7 +78,7 @@ public class SimulationUtils {
         //endregion
 
         //sort initiative rolls
-        List<Integer> sortedRollList = initiativeRollMap.entrySet().stream().map(Map.Entry::getKey)
+        List<Integer> sortedRollList = initiativeRollMap.keySet().stream()
                 .sorted(Comparator.comparingInt(Integer::intValue).reversed()).collect(Collectors.toList());
 
         //create sorted combatant list from sorted initiative roll list

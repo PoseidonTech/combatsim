@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:element name="gameConfig">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="combatants">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="combatant" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="name" type="xs:string"/>
+                                        <xs:element name="strength" type="xs:integer"/>
+                                        <xs:element name="perception" type="xs:integer"/>
+                                        <xs:element name="endurance" type="xs:integer"/>
+                                        <xs:element name="agility" type="xs:integer"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+
+                <xs:element name="weapons">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="weapon" maxOccurs="unbounded">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="name" type="xs:string"/>
+                                        <xs:element name="weaponType" type="xs:string"/>
+                                        <xs:element name="diceToRoll" type="xs:integer"/>
+                                        <xs:element name="diceToKeep" type="xs:integer"/>
+                                        <xs:element name="addToKeepSum" type="xs:integer"/>
+                                        <xs:element name="maxAmmo" type="xs:integer"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
